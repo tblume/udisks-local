@@ -51,6 +51,10 @@ void            udisks_linux_drive_ata_apply_configuration (UDisksLinuxDriveAta 
                                                             UDisksLinuxDevice       *device,
                                                             GVariant                *configuration);
 
+gboolean       get_pm_state                                 (UDisksLinuxDevice      *device, 
+                                                            GError                  **error,
+                                                            guchar                  *count);
+
 G_END_DECLS
 
 #endif /* __UDISKS_LINUX_DRIVE_ATA_H__ */

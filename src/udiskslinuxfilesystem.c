@@ -51,6 +51,8 @@
 #include "udisksmount.h"
 #include "udiskslinuxdevice.h"
 #include "udiskssimplejob.h"
+#include "udiskslinuxdriveata.h"
+
 
 /**
  * SECTION:udiskslinuxfilesystem
@@ -159,6 +161,7 @@ udisks_linux_filesystem_update (UDisksLinuxFilesystem  *filesystem,
   const gchar *type;
   guint64 size;
   GError *error = NULL;
+  guchar count;
 
   mount_monitor = udisks_daemon_get_mount_monitor (udisks_linux_block_object_get_daemon (object));
   device = udisks_linux_block_object_get_device (object);
@@ -183,6 +186,13 @@ udisks_linux_filesystem_update (UDisksLinuxFilesystem  *filesystem,
   dev = udisks_linux_block_object_get_device_file (object);
   type = g_udev_device_get_property (device->udev_device, "ID_FS_TYPE");
   size = 0;
+
+  //skip get_info when drive is suspended
+  if (!get_pm_state(device, &error, &count))
+      goto out;
+  if (!(count == 0x80 || count == 0xff))
+      goto out;
+
   if (g_strcmp0 (type, "ext2") == 0) {
       BDFSExt2Info *info = bd_fs_ext2_get_info (dev, &error);
       if (info)
@@ -214,6 +224,7 @@ udisks_linux_filesystem_update (UDisksLinuxFilesystem  *filesystem,
   }
   udisks_filesystem_set_size (UDISKS_FILESYSTEM (filesystem), size);
 
+out:
   g_free (dev);
   g_object_unref (device);
   g_clear_error (&error);
